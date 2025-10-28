@@ -1,0 +1,27 @@
+# Data
+
+data/images
+
+*csv
+
+# MLflow logs 
+
+mlruns/
+
+# Cache
+
+__pycache__/
+
+# venv 
+
+venv/
+
+# Notebooks 
+
+*.ipynb
+
+# Models weights 
+
+*.pt 
+*.pth
+
