@@ -2,8 +2,6 @@
 
 *.png
 
-*csv
-
 # MLflow logs 
 
 mlruns/
