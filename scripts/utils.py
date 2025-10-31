@@ -27,7 +27,6 @@ class eyes_dataset(Dataset):
         self.df=df
         self.transform=transform
 
-
     def __len__(self):
         return(len(self.df))
     
@@ -115,22 +114,18 @@ class FocalLoss(nn.Module):
 
 
 # %%
-from utils import test_loader
 from torchvision.models import resnet50,mobilenet_v3_small
 import torch.nn as nn 
 import torch 
 
-def get_student(state_dict_path=None,device=None):
+def get_student(state_dict_path=None,device="cpu"):
     mobile_net=mobilenet_v3_small(weights="MobileNet_V3_Small_Weights.IMAGENET1K_V1")
 
     mobile_net.classifier[3]=nn.Linear(1024,5)     
 
-    
     if state_dict_path : 
 
         state_dict = torch.load(state_dict_path, map_location=device)
-        print(list(torch.load("mobilenetv3_distilled_best.pth", map_location="cpu").keys())[:10])
-
         mobile_net.load_state_dict(state_dict)
 
     return(mobile_net)
@@ -149,7 +144,5 @@ def get_teacher(model_path=None,device="cuda"):
 
     return(teacher)
 # %%
-
-# %% 
 
 
