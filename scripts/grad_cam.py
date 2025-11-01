@@ -7,127 +7,50 @@ from PIL import Image
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
-from utils import test_ds,df_test
-
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
-from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-from pytorch_grad_cam.utils.image import show_cam_on_image
-
-def select_indices_by_class(df, targets, n_per_class):
-    indices = []
-    for target in targets:
-        class_indices = np.where(np.array(df['label']) == target)[0]
-        if len(class_indices) > 0:
-            chosen = np.random.choice(class_indices, size=min(n_per_class, len(class_indices)), replace=False)
-            indices.extend(chosen)
-    return indices
-
-def compute_gradcam_for_model(model, target_layers, input_tensor, label, rgb_img, device):
-    model.to(device)
-    model.eval()
-
-    with GradCAM(model=model, target_layers=target_layers) as cam:
-        targets_cam = [ClassifierOutputTarget(label)]
-        grayscale_cam = cam(input_tensor=input_tensor, targets=targets_cam)[0, :]
-        visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
-        y_pred = torch.argmax(model(input_tensor), dim=1).item()
-
-    return visualization, y_pred
+from utils import val_transforms, get_student
+from predict import predict
+import cv2
 
 
-def plot_gradcam_results(images_data, models_info):
-    n_rows = len(images_data)
-    n_cols = len(models_info) + 1
+def get_grad_cam_vis(model,img_path):
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
-    if n_rows == 1:
-        axes = np.expand_dims(axes, axis=0)
+    target_layer=[model.features[-1]]
+    
+    pred=[ClassifierOutputTarget(predict(model,img_path,device="cpu")[0])]
 
-    for row, (rgb_img, label, visualizations) in enumerate(images_data):
-        # Image originale
-        axes[row, 0].imshow(rgb_img)
-        axes[row, 0].set_title(f"Image (y={label})", fontsize=10)
-        axes[row, 0].axis("off")
+    img=Image.open(img_path).convert("RGB")
+    img_np=np.array(img)/255
+    H,W=img_np.shape[:2]
 
-        # Visualisations GradCAM
-        for col, (name, (vis, y_pred)) in enumerate(visualizations.items(), start=1):
-            axes[row, col].imshow(vis)
-            axes[row, col].set_title(f"{name}\n(pred={y_pred})", fontsize=10)
-            axes[row, col].axis("off")
+    input_tensor=val_transforms(img).unsqueeze(0).to("cpu")
 
-    plt.tight_layout()
+    with GradCAM(model,target_layers=target_layer) as cam:
+        
+
+        gray_scale_cam=cam(input_tensor,targets=pred)[0,:]
+        gray_scale_cam=cv2.resize(gray_scale_cam,(W,H))
+        print(gray_scale_cam.min(), gray_scale_cam.max())
+        visu=show_cam_on_image(img_np,gray_scale_cam,use_rgb=True)
+
+    return(visu)
+
+def plot_grad_cam(model,img_path):
+
+    visu=get_grad_cam_vis(model,img_path)
+    img=Image.open(img_path).convert("RGB")
+
+    fig,ax=plt.subplots(1,2,figsize=(16,12))
+    ax[0].imshow(visu)
+    ax[0].axis("off")
+    ax[1].imshow(img)
+    plt.axis("off")
     plt.show()
 
-def plot_gradcam_multi_model(
-    models,
-    model_names,
-    df,
-    dataset,
-    target_layers_list,
-    targets=[0, 1, 2],
-    n_per_class=2,
-    img_size=256,
-    device="cuda"
-):
-
-    assert len(models) == len(model_names) == len(target_layers_list), \
-        "models, model_names et target_layers_list doivent avoir la même longueur."
-
-    # 1️⃣ Sélection des indices à afficher
-    indices = select_indices_by_class(df, targets, n_per_class)
-    if len(indices) == 0:
-        print("Aucune image trouvée pour ces classes :", targets)
-        return
-
-    images_data = []
-
-    # 2️⃣ Pour chaque image sélectionnée, calculer les activations pour tous les modèles
-    for idx in indices:
-        input_tensor, label = dataset[idx]
-        input_tensor = input_tensor.unsqueeze(0).to(device)
-        rgb_img = np.array(Image.open(df["img_path"].iloc[idx]).resize((img_size, img_size))) / 255.0
-
-        visualizations = {}
-        for model, name, target_layers in zip(models, model_names, target_layers_list):
-            vis, pred = compute_gradcam_for_model(model, target_layers, input_tensor, label, rgb_img, device)
-            visualizations[name] = (vis, pred)
-
-        images_data.append((rgb_img, label, visualizations))
-
-    # 3️⃣ Affichage
-    plot_gradcam_results(images_data, list(zip(model_names, models)))
-
-    plt.show()
-
-# %%
 if __name__=="__main__":
+    img_path = r"data/images/img_3623.png"
+    weights_path = r"models/mobilenetv3_distilled_best.pth"
+    model = get_student(weights_path, device="cpu")
+    plot_grad_cam(model,img_path)
 
-    from utils import get_student,get_teacher
 
-    student_path=r"mobilenetv3_distilled_best.pth"
-    teacher_path=r"resnet50_aptos19_best.pth"
-    student=get_student(student_path).to("cuda")
-    teacher=get_teacher(teacher_path)
-
-    models = [teacher, student]
-    model_names = ["Teacher","Student"]
-    target_layers_list = [
-        [teacher.layer4[-1]],
-        [student.features[-1]]
-    ]
-
-    plot_gradcam_multi_model(
-        models=models,
-        model_names=model_names,
-        df=df_test,
-        dataset=test_ds,
-        target_layers_list=target_layers_list,
-        targets=[4],
-        n_per_class=1,
-        img_size=256
-    )
 # %%

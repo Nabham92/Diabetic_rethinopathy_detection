@@ -21,6 +21,6 @@ async def predict_endpoint(file: UploadFile = File(...)):
     model = get_student(weights_path, device="cpu")
 
     # Appeler ta fonction avec le chemin temporaire
-    severity, conf = predict(model, tmp_path, device="cpu")
+    severity, conf,_ = predict(model, tmp_path, device="cpu")
 
     return {"Image": tmp_path, "Severity": severity, "Confidence": conf}

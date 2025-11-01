@@ -1,7 +1,7 @@
 import torch
 from PIL import Image
 import matplotlib.pyplot as plt
-from .utils import get_student, test_ds,val_transforms
+from utils import get_student, test_ds,val_transforms
 import numpy as np
 
 def predict(model, img_path, device):
@@ -19,7 +19,7 @@ def predict(model, img_path, device):
 
     print(f"{img_path} → Severity: {pred} | Confidence : {conf:.2f}")
 
-    return pred, conf
+    return pred, conf, probs
 
 
 if __name__ == "__main__":   
