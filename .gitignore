@@ -17,9 +17,3 @@ venv/
 # Notebooks 
 
 *.ipynb
-
-# Models weights 
-
-*.pt 
-*.pth
-
