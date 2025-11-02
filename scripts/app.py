@@ -8,20 +8,23 @@ import tempfile
 
 st.set_page_config(page_title="Détection de rétinopathie", page_icon="🩺")
 
-st.title("🩺 Détection de rétinopathie via API")
-st.write("Glisse une image du fond d’œil pour l’analyser grâce au modèle hébergé dans ton API FastAPI.")
+st.title("🩺 Détection de rétinopathie")
+st.write("")
 
-# Adresse de ton API (modifie si besoin)
 API_URL = "http://127.0.0.1:8000/predict"
 
-img_path = r"data/images/img_3623.png"
 weights_path = r"models/mobilenetv3_distilled_best.pth"
 model = get_student(weights_path, device="cpu")
 
 uploaded_file = st.file_uploader("Glisse une image :", type=["png", "jpg", "jpeg"])
 
+labels ={0 : "No Diabetic Retinopathy",
+             1 : "Mild Diabetic Retinopathy",
+              2 : "Moderate Diabetic Retinopathy",
+               3 : "Severe Diabetic Retinopathy",
+                4 : "Proliferative Diabetic Rethinopathy" }
+
 if uploaded_file is not None:
-    # Afficher l’image
 
     image = Image.open(uploaded_file)
     
@@ -37,15 +40,16 @@ if uploaded_file is not None:
     # Envoyer à l’API
     with st.spinner("Analyse en cours..."):
         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-        print(uploaded_file.name)
         response = requests.post(API_URL, files=files)
 
         st.write("Code retour API :", response.status_code)
         st.write("Texte brut :", response.text)
+
     if response.status_code == 200:
         result = response.json()
         st.success("✅ Analyse terminée !")
-        st.write(f"**Sévérité prédite :** {result['Severity']}")
+
+        st.write(f"**Sévérité prédite :** {labels[result['Severity']]}")
         st.write(f"**Confiance :** {result['Confidence']:.2f}")
 
         grad_cam_vis=get_grad_cam_vis(model,tmp_path)

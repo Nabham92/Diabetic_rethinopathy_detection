@@ -5,8 +5,7 @@ from utils import get_student, test_ds,val_transforms
 import numpy as np
 
 def predict(model, img_path, device):
-    
-    """Fait une prédiction sur une image """
+
     model.eval()
     x = Image.open(img_path).convert("RGB")
     input_tensor = val_transforms(x).unsqueeze(0).to(device)
@@ -17,9 +16,15 @@ def predict(model, img_path, device):
         pred = torch.argmax(probs, dim=1).item()
         conf = np.round(probs[0, pred].item(),2)
 
-    print(f"{img_path} → Severity: {pred} | Confidence : {conf:.2f}")
+    labels ={0 : "No Diabetic Retinopathy",
+             1 : "Mild Diabetic Retinopathy",
+              2 : "Moderate Diabetic Retinopathy",
+               3 : "Severe Diabetic Retinopathy",
+                4 : "Proliferative Diabetic Rethinopathy" }
 
-    return pred, conf, probs
+    print(f"{img_path} → Severity: {labels[pred]} | Confidence : {conf:.2f}")
+
+    return  pred, conf, probs
 
 
 if __name__ == "__main__":   
