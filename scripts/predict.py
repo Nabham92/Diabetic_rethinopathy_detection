@@ -1,7 +1,7 @@
 import torch
 from PIL import Image
 import matplotlib.pyplot as plt
-from utils import get_student, test_ds,val_transforms
+from scripts.utils import get_student, test_ds,val_transforms
 import numpy as np
 
 def predict(model, img_path, device):

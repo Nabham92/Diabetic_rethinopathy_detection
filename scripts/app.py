@@ -8,15 +8,15 @@ import tempfile
 
 st.set_page_config(page_title="Détection de rétinopathie", page_icon="🩺")
 
-st.title("🩺 Détection de rétinopathie")
-st.write("")
+st.title("🩺 Diabetic Retinopathy Detection")
+#st.write("")
 
-API_URL = "http://127.0.0.1:8000/predict"
+API_URL = "http://api:8000/predict"
 
 weights_path = r"models/mobilenetv3_distilled_best.pth"
 model = get_student(weights_path, device="cpu")
 
-uploaded_file = st.file_uploader("Glisse une image :", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("Drag an image :", type=["png", "jpg", "jpeg"])
 
 labels ={0 : "No Diabetic Retinopathy",
              1 : "Mild Diabetic Retinopathy",
@@ -37,7 +37,7 @@ if uploaded_file is not None:
         tmp_file.write(uploaded_file.getvalue())
         tmp_path = tmp_file.name  # vrai chemin disque
 
-    # Envoyer à l’API
+    # Request the API 
     with st.spinner("Analyse en cours..."):
         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
         response = requests.post(API_URL, files=files)
