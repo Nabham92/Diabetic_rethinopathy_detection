@@ -1,17 +1,22 @@
 import streamlit as st
 import requests
 from PIL import Image
-from grad_cam import get_grad_cam_vis
-from utils import get_student
+from backend.grad_cam import get_grad_cam_vis
+from scripts.utils import get_student
 import io
 import tempfile
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(page_title="Détection de rétinopathie", page_icon="🩺")
 
 st.title("🩺 Diabetic Retinopathy Detection")
 #st.write("")
 
-API_URL = "http://api:8000/predict"
+BASE_API_URL = os.getenv("API_URL","http://localhost:8000")
+
 
 weights_path = r"models/mobilenetv3_distilled_best.pth"
 model = get_student(weights_path, device="cpu")
@@ -40,7 +45,8 @@ if uploaded_file is not None:
     # Request the API 
     with st.spinner("Analyse en cours..."):
         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-        response = requests.post(API_URL, files=files)
+        predict_url=BASE_API_URL+"/predict"
+        response = requests.post(predict_url, files=files)
 
         st.write("Code retour API :", response.status_code)
         st.write("Texte brut :", response.text)

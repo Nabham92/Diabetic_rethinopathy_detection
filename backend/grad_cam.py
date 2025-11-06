@@ -7,10 +7,9 @@ from PIL import Image
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
-from utils import val_transforms, get_student
-from predict import predict
+from scripts.utils import val_transforms, get_student
+from backend.predict import predict
 import cv2
-
 
 def get_grad_cam_vis(model,img_path):
 

@@ -3,12 +3,14 @@ import tempfile
 from PIL import Image
 import io
 from .predict import predict
-from .utils import get_student
+from scripts.utils import get_student
 
 app = FastAPI()
+
 weights_path = "models/mobilenetv3_distilled_best.pth"
 
 @app.post("/predict")
+
 async def predict_endpoint(file: UploadFile = File(...)):
     # Sauvegarder temporairement le fichier pour obtenir un chemin
     contents = await file.read()

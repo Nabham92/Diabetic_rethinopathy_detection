@@ -11,6 +11,8 @@ train_idx,test_idx=train_test_split(np.arange(0,len(df)),random_state=0)
 df_train=df.iloc[train_idx,:]
 df_test=df.iloc[test_idx,:]
 
+print(df_test.shape)
+
 train_idx,val_idx=train_test_split(np.arange(0,len(df_train)))
 df_train,df_val=df_train.iloc[train_idx,:],df_train.iloc[val_idx,:]
 
@@ -145,4 +147,16 @@ def get_teacher(model_path=None,device="cuda"):
     return(teacher)
 # %%
 
+import torch
+import random
+import numpy as np
 
+def set_seed(seed: int = 1):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    print(f"✅ Seed fixée à {seed}")

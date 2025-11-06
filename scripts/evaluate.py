@@ -1,22 +1,10 @@
 # %%
-
-from utils import test_loader
+from scripts.utils import test_loader,get_teacher,get_student
 from sklearn.metrics import accuracy_score,confusion_matrix,f1_score,classification_report,cohen_kappa_score
 import torch
 import torchvision.models as models
 import time 
 import numpy as np
-
-num_classes=5
-
-resnet = models.resnet50(weights=None)
-# Adapting the last layer to the 5-class classification task
-num_features = resnet.fc.in_features
-resnet.fc = torch.nn.Linear(num_features, num_classes)
-#Load the weights
-weights_path="models/resnet50_aptos19_best.pth"
-state_dict = torch.load(weights_path, map_location="cuda")
-resnet.load_state_dict(state_dict)
 
 def evaluate(model,loader,device="cuda"):
 
@@ -26,6 +14,7 @@ def evaluate(model,loader,device="cuda"):
     y_pred=[]
     y_true=[]
 
+    print("Evaluation starting")
     start_time=time.time()
 
     with torch.no_grad():
@@ -42,7 +31,6 @@ def evaluate(model,loader,device="cuda"):
 
     metrics = {
             "accuracy": np.round(accuracy_score(y_true, y_pred),2),
-            "f1_macro": np.round(f1_score(y_true, y_pred, average="macro"),2),
             "quadratic_kappa": np.round(cohen_kappa_score(y_true, y_pred, weights="quadratic"),2)
         }
 
@@ -50,6 +38,16 @@ def evaluate(model,loader,device="cuda"):
     print(f"Inference time on {device} : {inference_time:.2f} seconds.")
     print(f"Performace : {metrics}")
 
+    return(metrics)
+
 if __name__ == "__main__":
-    evaluate(resnet,test_loader,device="cuda")
+
+    weights_path_teacher="models/resnet50_aptos19_best.pth"
+    teacher=get_teacher(weights_path_teacher,device="cpu")
+
+    weights_path_student="models/mobilenetv3_distilled_best.pth"
+    student=get_student(weights_path_student,device="cpu")
+
+    evaluate(teacher,test_loader,device="cpu")
+    evaluate(student,test_loader,device="cpu")
 # %%

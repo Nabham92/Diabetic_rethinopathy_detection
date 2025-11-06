@@ -17,3 +17,7 @@ venv/
 # Notebooks 
 
 *.ipynb
+
+# Environ variables
+
+*.env

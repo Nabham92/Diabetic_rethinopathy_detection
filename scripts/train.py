@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score,confusion_matrix
 import numpy as np
-from utils import FocalLoss,train_loader,val_loader,df_train
+from utils import FocalLoss,train_loader,val_loader,df_train,set_seed
 
 # --- Initialisation du modèle ---
 model = resnet50(weights="IMAGENET1K_V1")
