@@ -1,0 +1,16 @@
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+
+torch
+torchvision
+torchaudio
+
+grad-cam
+opencv-python-headless
+fastapi
+uvicorn
+python-dotenv
+pillow
+numpy
+
+python-multipart

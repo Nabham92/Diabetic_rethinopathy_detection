@@ -1,8 +1,8 @@
 import torch
 from PIL import Image
-import matplotlib.pyplot as plt
-from scripts.utils import get_student, test_ds,val_transforms
+from models.mobile_net import get_student
 import numpy as np
+from transforms import val_transforms 
 
 def predict(model, img_path, device):
 
@@ -17,6 +17,7 @@ def predict(model, img_path, device):
     input_tensor = val_transforms(x).unsqueeze(0).to(device)
 
     with torch.no_grad():
+        
         output = model(input_tensor)
         probs = torch.softmax(output, dim=1)
         pred = torch.argmax(probs, dim=1).item()
@@ -34,13 +35,13 @@ def predict(model, img_path, device):
 
 
 if __name__ == "__main__":   
+
     device = "cuda"  
 
-    weights_path = r"models/mobilenetv3_distilled_best.pth"
-
-    model = get_student(state_dict_path=weights_path, device=device)      
+    model = get_student(device=device)      
 
     for img_id in [2500]:
+
         img = f"data/images/img_{img_id}.png"
         print(f"\nProcessing: {img}")
         predict(model, img, device)

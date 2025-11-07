@@ -1,28 +1,26 @@
 version: "3.9"
 
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    container_name: dr_api
+  backend:
+    build: ./backend
+    container_name: retino-backend
     ports:
       - "8000:8000"
     networks:
-      - dr_network
+      - retino-net
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.app
-    container_name: dr_app
+  frontend:
+    build: ./app
+    container_name: retino-frontend
     ports:
       - "8501:8501"
+    environment:
+      - API_URL=http://backend:8000
     depends_on:
-      - api
+      - backend
     networks:
-      - dr_network
+      - retino-net
 
 networks:
-  dr_network:
+  retino-net:
     driver: bridge

@@ -1,25 +1,21 @@
 import streamlit as st
 import requests
 from PIL import Image
-from backend.grad_cam import get_grad_cam_vis
-from scripts.utils import get_student
 import io
 import tempfile
 import os
 from dotenv import load_dotenv
+import base64
 
 load_dotenv()
 
 st.set_page_config(page_title="Détection de rétinopathie", page_icon="🩺")
 
 st.title("🩺 Diabetic Retinopathy Detection")
+
 #st.write("")
 
 BASE_API_URL = os.getenv("API_URL","http://localhost:8000")
-
-
-weights_path = r"models/mobilenetv3_distilled_best.pth"
-model = get_student(weights_path, device="cpu")
 
 uploaded_file = st.file_uploader("Drag an image :", type=["png", "jpg", "jpeg"])
 
@@ -49,7 +45,6 @@ if uploaded_file is not None:
         response = requests.post(predict_url, files=files)
 
         st.write("Code retour API :", response.status_code)
-        st.write("Texte brut :", response.text)
 
     if response.status_code == 200:
         result = response.json()
@@ -58,9 +53,12 @@ if uploaded_file is not None:
         st.write(f"**Sévérité prédite :** {labels[result['Severity']]}")
         st.write(f"**Confiance :** {result['Confidence']:.2f}")
 
-        grad_cam_vis=get_grad_cam_vis(model,tmp_path)
+        #grad_cam_vis=get_grad_cam_vis(model,tmp_path)
+        grad_cam_bytes = base64.b64decode(result["GradCAM"])
+        grad_cam_img = Image.open(io.BytesIO(grad_cam_bytes))
+
         with col2:
-            st.image(grad_cam_vis, caption="Grad-CAM", use_container_width=True)
+            st.image(grad_cam_img, caption="Grad-CAM", use_container_width=True)
         
     else:
         st.error(f"Erreur {response.status_code} : impossible d’obtenir une réponse.")
