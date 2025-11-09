@@ -116,21 +116,7 @@ class FocalLoss(nn.Module):
 
 
 # %%
-from torchvision.models import resnet50,mobilenet_v3_small
-import torch.nn as nn 
-import torch 
 
-def get_student(state_dict_path=None,device="cpu"):
-    mobile_net=mobilenet_v3_small(weights="MobileNet_V3_Small_Weights.IMAGENET1K_V1")
-
-    mobile_net.classifier[3]=nn.Linear(1024,5)     
-
-    if state_dict_path : 
-
-        state_dict = torch.load(state_dict_path, map_location=device)
-        mobile_net.load_state_dict(state_dict)
-
-    return(mobile_net)
 
 from torchvision.models import resnet50
 
@@ -145,6 +131,24 @@ def get_teacher(model_path=None,device="cuda"):
         teacher = resnet50(weights="IMAGENET1K_V1")
 
     return(teacher)
+
+from torchvision.models import mobilenet_v3_small
+
+def get_student(state_dict_path=None):
+
+    mobile_net=mobilenet_v3_small(weights="MobileNet_V3_Small_Weights.IMAGENET1K_V1")
+
+    mobile_net.classifier[3]=nn.Linear(1024,5)     
+
+    state_dict = torch.load("mobile_net_small.pth", map_location="cpu")
+
+    if state_dict_path : 
+
+        mobile_net.load_state_dict(state_dict)
+
+    mobile_net.to("cuda")
+
+    return(mobile_net)    
 # %%
 
 import torch
@@ -159,4 +163,4 @@ def set_seed(seed: int = 1):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    print(f"✅ Seed fixée à {seed}")
+    print(f" Seed : {seed}")

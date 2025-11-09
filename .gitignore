@@ -16,8 +16,16 @@ venv/
 
 # Notebooks 
 
-*.ipynb
+notebooks/
 
 # Environ variables
 
 *.env
+
+*.pem
+
+key_retinopathy.pem:Zone.Identifier
+
+# docker images
+
+*.tar

@@ -24,11 +24,9 @@ async def predict_endpoint(file: UploadFile = File(...)):
     severity, conf, _ = predict(model, tmp_path, device=device)
     grad_cam_img = get_grad_cam_vis(model, tmp_path)
 
-    # ✅ Convertir NumPy → PIL si besoin
     if isinstance(grad_cam_img, np.ndarray):
         grad_cam_img = Image.fromarray(grad_cam_img)
 
-    # Encoder l’image en Base64
     buffered = io.BytesIO()
     grad_cam_img.save(buffered, format="PNG")
     grad_cam_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")

@@ -27,7 +27,10 @@ def get_grad_cam_vis(model,img_path):
     with GradCAM(model,target_layers=target_layer) as cam:
         
         gray_scale_cam=cam(input_tensor,targets=pred)[0,:]
-        gray_scale_cam=cv2.resize(gray_scale_cam,(W,H))
+        gray_scale_cam = np.array(
+            Image.fromarray(gray_scale_cam).resize((W, H), resample=Image.BILINEAR)
+    )
+
         print(gray_scale_cam.min(), gray_scale_cam.max())
         visu=show_cam_on_image(img_np,gray_scale_cam,use_rgb=True)
 

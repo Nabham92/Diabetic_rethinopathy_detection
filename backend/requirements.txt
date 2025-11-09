@@ -3,10 +3,9 @@
 
 torch
 torchvision
-torchaudio
 
 grad-cam
-opencv-python-headless
+#opencv-python-headless
 fastapi
 uvicorn
 python-dotenv

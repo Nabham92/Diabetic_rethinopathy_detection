@@ -9,9 +9,9 @@ import base64
 
 load_dotenv()
 
-st.set_page_config(page_title="Détection de rétinopathie", page_icon="🩺")
+st.set_page_config(page_title="Diabetic Retinopathy Detection", page_icon="")
 
-st.title("🩺 Diabetic Retinopathy Detection")
+st.title("Diabetic Retinopathy Detection")
 
 #st.write("")
 
@@ -32,26 +32,26 @@ if uploaded_file is not None:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.image(image, caption="Image originale", use_container_width=True)
+        st.image(image, caption="Original Image", use_container_width=True)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
-        tmp_path = tmp_file.name  # vrai chemin disque
+        tmp_path = tmp_file.name
 
     # Request the API 
-    with st.spinner("Analyse en cours..."):
+    with st.spinner("Analyzing"):
         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
         predict_url=BASE_API_URL+"/predict"
         response = requests.post(predict_url, files=files)
 
-        st.write("Code retour API :", response.status_code)
+        st.write("API response :", response.status_code)
 
     if response.status_code == 200:
         result = response.json()
-        st.success("✅ Analyse terminée !")
+        st.success(" Analysis completed")
 
-        st.write(f"**Sévérité prédite :** {labels[result['Severity']]}")
-        st.write(f"**Confiance :** {result['Confidence']:.2f}")
+        st.write(f"**Predicted severity :** {labels[result['Severity']]}")
+        st.write(f"**Confidence :** {result['Confidence']:.2f}")
 
         #grad_cam_vis=get_grad_cam_vis(model,tmp_path)
         grad_cam_bytes = base64.b64decode(result["GradCAM"])
@@ -61,6 +61,6 @@ if uploaded_file is not None:
             st.image(grad_cam_img, caption="Grad-CAM", use_container_width=True)
         
     else:
-        st.error(f"Erreur {response.status_code} : impossible d’obtenir une réponse.")
+        st.error(f"Error {response.status_code}")
 else:
-    st.info("⬆️ Glisse une image pour commencer.")
+    st.info("Drag an image")

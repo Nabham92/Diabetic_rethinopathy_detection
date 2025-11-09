@@ -1,13 +1,13 @@
 # %%
 from dataclasses import dataclass
 from scripts.evaluate import evaluate
-from scripts.utils import train_loader, val_loader, test_loader, FocalLoss, get_student, df_train,set_seed
+from scripts.utils import train_loader, val_loader, FocalLoss, df_train,set_seed,get_teacher
 import torch
 import torch.nn as nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import copy
-
+from scripts.evaluate import evaluate
 
 @dataclass
 class TrainConfig:
@@ -16,7 +16,7 @@ class TrainConfig:
     loss: nn.Module
     device: str = "cuda"
     patience: int = 5  
-    delta: float = 1e-4  
+    delta: float = 1e-3
 
 def train(model, loader, optimizer, train_config, val_loader=None, scheduler=None): 
     model.to(train_config.device)
@@ -67,7 +67,7 @@ def train(model, loader, optimizer, train_config, val_loader=None, scheduler=Non
 
             # Early stopping
             if epochs_no_improve >= train_config.patience:
-                print(f" Early stopping triggered at epoch {epoch+1}.")
+                print(f" Early triggered  at {epoch+1}.")
                 break
 
     # Loading the best model 
@@ -76,44 +76,53 @@ def train(model, loader, optimizer, train_config, val_loader=None, scheduler=Non
 
     return model
 
+if __name__=="__main__" : 
 
+    from torchvision.models import resnet50
 
-set_seed(1)
-class_counts = df_train["label"].value_counts().sort_index()
-frequences = class_counts / class_counts.sum()
-alpha = (1.0 / frequences)
-alpha = alpha / alpha.sum()
+    set_seed(1)
 
-criterion = FocalLoss(alpha=alpha.tolist(), gamma=2.0)
+    # ResNet50 pretrained on ImageNet
+    resnet = resnet50(weights="IMAGENET1K_V1")
+    resnet.fc = nn.Linear(2048, 5)
 
-train_config = TrainConfig(
-    n_epochs=30,
-    lr=1e-4,
-    loss=criterion,
-    patience=5,    
-    delta=1e-4
-)
-
-mobile_net = get_student(device="cuda")
-
-# Geler les blocs initiaux
-
-for name, param in mobile_net.features.named_parameters():
-    bloc_idx = int(name.split(".")[0])
-    if bloc_idx <= 6: 
+    # Freeze all layers
+    for param in resnet.parameters():
         param.requires_grad = False
 
-optimizer = Adam(
-    filter(lambda p: p.requires_grad, mobile_net.parameters()), 
-    lr=train_config.lr
-)
+    # Unfreezing layers to train
+    for param in resnet.layer3.parameters():
+        param.requires_grad = True
+    for param in resnet.layer4.parameters():
+        param.requires_grad = True
+    for param in resnet.fc.parameters():
+        param.requires_grad = True
 
-scheduler = CosineAnnealingLR(optimizer, T_max=train_config.n_epochs)
+    # Defining weights to prenalize errors on minority classes during training 
+    class_counts = df_train["label"].value_counts().sort_index()
+    frequences = class_counts / class_counts.sum()
+    alpha = (1.0 / frequences)
+    alpha = alpha / alpha.sum()
 
-# Entraînement avec early stopping
-trained_model = train(mobile_net, train_loader, optimizer, train_config, val_loader=val_loader, scheduler=scheduler)
+    criterion = FocalLoss(alpha=alpha.tolist(), gamma=2.0)
 
-# %%
+    # Training 
+    train_config = TrainConfig(
+        n_epochs=30,
+        lr=1e-4,
+        loss=criterion,
+        patience=5,    
+        delta=1e-4)
 
-evaluate(mobile_net,test_loader,device="cpu")
-# %%
+    optimizer = Adam(
+        filter(lambda p: p.requires_grad, resnet.parameters()), 
+        lr=train_config.lr
+    )
+
+    scheduler = CosineAnnealingLR(optimizer, T_max=train_config.n_epochs)
+
+    # Entraînement avec early stopping
+    trained_model = train(resnet, train_loader, optimizer, train_config, val_loader=val_loader, scheduler=scheduler)
+
+    torch.save(trained_model.state_dict(), "backend/models/resnet50_aptos19_best.pth")
+
