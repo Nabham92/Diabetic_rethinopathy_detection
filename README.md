@@ -21,7 +21,7 @@ This project aims to Develop a model capable of classifying retinal fundus image
 ---
 
 ## Web application:
-[http://13.60.221.192:8501](http://13.60.221.192:8501)  *Deployed on AWS EC2 using Docker.*
+[http://13.60.221.192:8501](http://13.60.169.82:8501/)  *Deployed on AWS EC2 using Docker.*
 
 
 ---
